@@ -1,7 +1,7 @@
 # Project Documentation
 
 ## Overview
-This repository implements a multi-functional system for user authentication, contest management, and game management. Built with Flask and SQLite, the system is designed for scalability and easy integration with frontends.
+This repository implements a multi-functional system for user authentication, contest management, and game management. Built with Flask and Firebase RTB, the system is designed for scalability and easy integration with frontends.
 
 ---
 
@@ -40,7 +40,6 @@ This repository implements a multi-functional system for user authentication, co
 ### Prerequisites
 - **Python 3.8+**
 - **Flask**
-- **SQLite**
 
 ### Installation Steps
 1. Clone the repository:
@@ -162,8 +161,8 @@ The `contest.py` file integrates with Firebase Realtime Database to manage conte
 ---
 
 ## Contributors
-- **RaghavArora1163**
-- **DamnNaman**
+- **Raghav Arora**
+- **Megh Sankhla**
 
 ---
 
