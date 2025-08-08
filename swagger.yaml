@@ -1,0 +1,553 @@
+openapi: 3.0.0
+info:
+  title: Damnplay API Documentation
+  version: 1.0.0
+  description: API documentation for Damnplay's contest, game, leaderboard, user, and wallet modules.
+
+components:
+  securitySchemes:
+    AccessTokenAuth:
+      type: apiKey
+      in: header
+      name: access-token  # Define the name of the custom header
+
+    HeaderAuth:
+      type: apiKey
+      in: header
+      name: Authorization  # Define the name of the custom header  
+    
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+paths:
+  /damnplay/contest/create:
+    post:
+      summary: Create a new contest
+      description: |
+        This endpoint allows creating a new contest. 
+        - Requires a valid `access-token`.
+        - User must have an admin role.
+      security:
+        - bearerAuth: []
+        - AccessTokenAuth: []     # Enforces the `access-token` header
+      requestBody:
+        description: Contest creation details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                entry_fee:
+                  type: number
+                  description: Entry fee for the contest
+      responses:
+        '200':
+          description: Contest created successfully
+        '400':
+          description: Entry fee is required
+        '500':
+          description: Server error
+
+  /damnplay/contest/join:
+    post:
+      summary: Join a contest
+      description: Deducts entry fee from the user's wallet.
+      security:
+        - bearerAuth: []
+        - AccessTokenAuth: []
+      requestBody:
+        description: Contest joining details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contest_id:
+                  type: string
+                  description: ID of the contest to join
+      responses:
+        '200':
+          description: Joined contest successfully
+        '400':
+          description: Contest ID is required
+        '404':
+          description: Contest not found
+        '500':
+          description: Server error
+
+  /damnplay/contest/active:
+    get:
+      summary: Retrieve active contests
+      description: No authentication required.
+      responses:
+        '200':
+          description: Active contests retrieved successfully
+        '500':
+          description: Server error
+
+  /damnplay/contest/cancel:
+    post:
+      summary: Cancel a contest
+      description: |
+        This endpoint Cancel Contest and refund. 
+        - Requires a valid `access-token`.
+        - User must have an admin role.
+      security:
+        - bearerAuth: []
+        - AccessTokenAuth: []    # Enforces the `access-token` header
+      requestBody:
+        description: Contest cancellation details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contest_id:
+                  type: string
+                  description: ID of the contest to cancel
+      responses:
+        '200':
+          description: Contest canceled successfully
+        '400':
+          description: Contest ID is required
+        '500':
+          description: Server error
+
+  /damnplay/game/games:
+    get:
+      summary: List games with filters and pagination
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: Filter by game category
+        - in: query
+          name: min_popularity
+          schema:
+            type: number
+            default: 0
+          description: Minimum popularity score
+        - in: query
+          name: max_popularity
+          schema:
+            type: number
+            default: 100
+          description: Maximum popularity score
+        - in: query
+          name: min_rating
+          schema:
+            type: number
+            default: 0
+          description: Minimum rating
+        - in: query
+          name: max_rating
+          schema:
+            type: number
+            default: 5
+          description: Maximum rating
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Number of items per page
+      responses:
+        '200':
+          description: List of games retrieved successfully
+        '400':
+          description: Invalid query parameters
+        '500':
+          description: Server error
+
+    post:
+      summary: Create a new game
+      description: Add metadata for a new game.
+      requestBody:
+        description: Game details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Title of the game
+                category:
+                  type: string
+                  description: Category of the game
+                description:
+                  type: string
+                  description: Description of the game
+                release_year:
+                  type: integer
+                  description: Release year of the game
+                popularity:
+                  type: number
+                  description: Popularity score of the game
+                average_rating:
+                  type: number
+                  description: Average rating of the game
+      responses:
+        '201':
+          description: Game created successfully
+        '400':
+          description: Missing or invalid fields
+        '500':
+          description: Server error
+
+  /damnplay/leaderboard/leaderboard/{contest_id}:
+    get:
+      summary: Fetch the current leaderboard for an active contest
+      parameters:
+        - in: path
+          name: contest_id
+          required: true
+          schema:
+            type: string
+          description: ID of the contest
+      responses:
+        '200':
+          description: Leaderboard retrieved successfully
+        '404':
+          description: Contest not found
+        '500':
+          description: Server error
+
+  /damnplay/leaderboard/update_leaderboard:
+    post:
+      summary: Update the leaderboard for an active contest
+      requestBody:
+        description: Leaderboard update details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contest_id:
+                  type: string
+                  description: ID of the contest
+                user_id:
+                  type: string
+                  description: ID of the user
+                username:
+                  type: string
+                  description: Name of the user
+                score:
+                  type: number
+                  description: New score of the user
+      responses:
+        '200':
+          description: Leaderboard updated successfully
+        '404':
+          description: Contest not found
+        '500':
+          description: Server error
+
+  /damnplay/leaderboard/leaderboard/history/{contest_id}:
+    get:
+      summary: Fetch historical leaderboard data for a completed contest
+      parameters:
+        - in: path
+          name: contest_id
+          required: true
+          schema:
+            type: string
+          description: ID of the contest
+      responses:
+        '200':
+          description: Historical leaderboard data retrieved successfully
+        '404':
+          description: Contest not found
+        '500':
+          description: Server error
+
+  /damnplay/leaderboard/leaderboard/complete:
+    post:
+      summary: Complete a contest and archive its leaderboard
+      requestBody:
+        description: Contest completion details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contest_id:
+                  type: string
+                  description: ID of the contest
+      responses:
+        '200':
+          description: Contest completed successfully
+        '404':
+          description: Contest not found
+        '500':
+          description: Server error
+
+  /damnplay/user/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        description: User registration details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username of the new user
+                email:
+                  type: string
+                  description: Email of the new user
+                password:
+                  type: string
+                  description: Password for the new user
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Missing or invalid fields
+        '500':
+          description: Server error
+
+  /damnplay/user/login:
+    post:
+      summary: Login a user
+      description: Rate-limited to 5 attempts per minute.
+      requestBody:
+        description: User login details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: Email of the user
+                password:
+                  type: string
+                  description: Password of the user
+      responses:
+        '200':
+          description: User logged in successfully
+        '401':
+          description: Invalid credentials
+        '429':
+          description: Too many login attempts
+        '500':
+          description: Server error
+
+  /damnplay/user/logout:
+    post:
+      summary: Logout the current user
+      security:
+        - bearerAuth: []
+        - AccessTokenAuth: []
+      responses:
+        '200':
+          description: User logged out successfully
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+
+  /damnplay/user/profile/update:
+    put:
+      summary: Update the user profile
+      security:
+       - bearerAuth: []
+       - AccessTokenAuth: []
+       - HeaderAuth : []
+      requestBody:
+        description: Profile update details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: New username
+                email:
+                  type: string
+                  description: New email
+      responses:
+        '200':
+          description: Profile updated successfully
+        '400':
+          description: Missing or invalid fields
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+     
+
+  /damnplay/user/admin/users:
+    get:
+      summary: List all users (Admin only)
+      description: |
+        This endpoint retrieves a list of all registered users. 
+        - Requires a valid `Bearer Token` for authentication.
+        - Only accessible by users with an `admin` role.
+      security:
+        - bearerAuth: []
+        - AccessTokenAuth: []  # Requires Bearer Token
+      responses:
+        '200':
+          description: Successfully retrieved the list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "123"
+                    name:
+                      type: string
+                      example: "John Doe"
+                    email:
+                      type: string
+                      example: "john.doe@example.com"
+                    role:
+                      type: string
+                      example: "admin"
+        '401':
+          description: Unauthorized - Missing or invalid Bearer Token
+        '403':
+          description: Forbidden - Admin access required
+        '404':
+          description: No users found     
+
+  /damnplay/wallet/add-funds:
+    post:
+      summary: Add funds to a wallet
+      description: |
+        This endpoint allows creating a new contest. 
+        - Requires a valid `access-token`.
+      security:
+        - bearerAuth: []
+        - AccessTokenAuth: []    # Enforces the `access-token` header
+      requestBody:
+        description: Details for adding funds
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  description: Amount to add
+      responses:
+        '200':
+          description: Funds added successfully
+        '400':
+          description: Invalid amount
+        '500':
+          description: Server error
+
+  /damnplay/wallet/deduct-funds:
+    post:
+      summary: Deduct funds from a wallet
+      security:
+        - bearerAuth: []
+        - AccessTokenAuth: []
+      requestBody:
+        description: Details for deducting funds
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  description: Amount to deduct
+      responses:
+        '200':
+          description: Funds deducted successfully
+        '400':
+          description: Invalid amount
+        '500':
+          description: Server error
+
+  /damnplay/wallet/balance:
+    get:
+      summary: Retrieve wallet balance
+      description: |
+        This endpoint allows to fetch wallet-balance. 
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          description: The unique ID of the user to fetch
+          schema:
+            type: string
+            example: "456"  
+      security:
+        - bearerAuth: []
+        - AccessTokenAuth: []    # Enforces the `access-token` header
+      responses:
+        '200':
+          description: Wallet balance retrieved successfully
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+
+  /damnplay/wallet/transactions:
+    get:
+      summary: Get wallet transaction history
+      security:
+        - bearerAuth: []
+        - AccessTokenAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          description: The unique ID of the user to fetch
+          schema:
+            type: string
+            example: "456" 
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+          description: Start date for transaction history
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+          description: End date for transaction history
+      responses:
+        '200':
+          description: Transaction history retrieved successfully
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error

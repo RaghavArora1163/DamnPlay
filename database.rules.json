@@ -1,0 +1,49 @@
+{
+  "rules": {
+    "users": {
+      ".indexOn": ["email"],
+      ".read": "auth != null",
+      ".write": "auth != null && auth.uid == $user_id"
+    },
+    "games": {
+      ".indexOn": ["popularity", "category", "average_rating"],
+      ".read": true,
+      ".write": "auth != null && auth.token.admin == true"
+    },
+    "contests": {
+      ".indexOn": ["game", "game_id", "start_time", "end_time"],
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.admin == true"
+    },
+    "wallets": {
+      "$user_id": {
+        ".read": "auth != null && auth.uid == $user_id",
+        ".write": "auth != null && auth.uid == $user_id",
+        ".indexOn": ["balance", "transactions"]
+      }
+    },
+    "leaderboards": {
+      "$contest_id": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.admin == true",
+        ".indexOn": ["score"]
+      }
+    },
+    "completed_contests": {
+      "$contest_id": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.admin == true",
+        ".indexOn": ["game", "timestamp"]
+      }
+    },
+    "contest_history": {
+      "$user_id": {
+        ".read": "auth != null && auth.uid == $user_id",
+        ".write": "auth != null && auth.token.admin == true",
+        ".indexOn": ["contest_id", "timestamp"]
+      }
+    },
+    ".read": false,
+    ".write": false
+  }
+}
